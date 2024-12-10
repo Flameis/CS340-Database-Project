@@ -59,22 +59,22 @@ CREATE TABLE Review (
 
 -- Sample data for User table
 INSERT INTO User (username, password, date_joined, role) VALUES
-('user1', 'password1', '2023-01-01', 'user'),
-('admin1', 'password2', '2023-01-02', 'admin'),
-('user2', 'password3', '2023-01-03', 'user'),
-('user3', 'password4', '2023-01-04', 'user'),
-('user4', 'password5', '2023-01-05', 'user'),
-('user5', 'password6', '2023-01-06', 'user'),
-('user6', 'password7', '2023-01-07', 'user'),
-('user7', 'password8', '2023-01-08', 'user'),
-('user8', 'password9', '2023-01-09', 'user'),
-('user9', 'password10', '2023-01-10', 'user');
+('john_doe', 'password1', '2023-01-01', 'user'),
+('admin_user', 'password2', '2023-01-02', 'admin'),
+('jane_smith', 'password3', '2023-01-03', 'user'),
+('emily_bronte', 'password4', '2023-01-04', 'user'),
+('mark_twain', 'password5', '2023-01-05', 'user'),
+('charles_dickens', 'password6', '2023-01-06', 'user'),
+('leo_tolstoy', 'password7', '2023-01-07', 'user'),
+('george_orwell', 'password8', '2023-01-08', 'user'),
+('jk_rowling', 'password9', '2023-01-09', 'user'),
+('agatha_christie', 'password10', '2023-01-10', 'user');
 
 -- Sample data for Author table
 INSERT INTO Author (fname, lname) VALUES
-('John', 'Doe'),
-('Jane', 'Smith'),
-('Emily', 'Bronte'),
+('John', 'Grisham'),
+('Jane', 'Austen'),
+('Emily', 'Dickinson'),
 ('Mark', 'Twain'),
 ('Charles', 'Dickens'),
 ('Leo', 'Tolstoy'),
@@ -85,26 +85,16 @@ INSERT INTO Author (fname, lname) VALUES
 
 -- Sample data for Book table
 INSERT INTO Book (author_id, title, date_published, avg_rating, genre) VALUES
-(1, 'Book One', '2023-01-01', 4.5, 'Fiction'),
-(2, 'Book Two', '2023-01-02', 3.8, 'Non-Fiction'),
-(3, 'Book Three', '2023-01-03', 4.2, 'Fiction'),
-(4, 'Book Four', '2023-01-04', 4.0, 'Fiction'),
-(5, 'Book Five', '2023-01-05', 3.9, 'Non-Fiction'),
-(6, 'Book Six', '2023-01-06', 4.1, 'Fiction'),
-(7, 'Book Seven', '2023-01-07', 4.3, 'Fiction'),
-(8, 'Book Eight', '2023-01-08', 4.4, 'Non-Fiction'),
-(9, 'Book Nine', '2023-01-09', 4.6, 'Fiction'),
-(10, 'Book Ten', '2023-01-10', 4.7, 'Non-Fiction'),
-(1, 'Book Eleven', '2023-01-11', 4.8, 'Fiction'),
-(2, 'Book Twelve', '2023-01-12', 4.9, 'Non-Fiction'),
-(3, 'Book Thirteen', '2023-01-13', 5.0, 'Fiction'),
-(4, 'Book Fourteen', '2023-01-14', 3.7, 'Fiction'),
-(5, 'Book Fifteen', '2023-01-15', 3.6, 'Non-Fiction'),
-(6, 'Book Sixteen', '2023-01-16', 3.5, 'Fiction'),
-(7, 'Book Seventeen', '2023-01-17', 3.4, 'Fiction'),
-(8, 'Book Eighteen', '2023-01-18', 3.3, 'Non-Fiction'),
-(9, 'Book Nineteen', '2023-01-19', 3.2, 'Fiction'),
-(10, 'Book Twenty', '2023-01-20', 3.1, 'Non-Fiction');
+(1, 'The Firm', '1991-02-01', 4.5, 'Legal Thriller'),
+(2, 'Pride and Prejudice', '1813-01-28', 4.8, 'Romance'),
+(3, 'Collected Poems', '1890-01-01', 4.2, 'Poetry'),
+(4, 'Adventures of Huckleberry Finn', '1884-12-10', 4.0, 'Adventure'),
+(5, 'A Tale of Two Cities', '1859-04-30', 4.1, 'Historical Fiction'),
+(6, 'War and Peace', '1869-01-01', 4.3, 'Historical Fiction'),
+(7, '1984', '1949-06-08', 4.6, 'Dystopian'),
+(8, 'Harry Potter and the Sorcerers Stone', '1997-06-26', 4.9, 'Fantasy'),
+(9, 'Murder on the Orient Express', '1934-01-01', 4.7, 'Mystery'),
+(10, 'The Old Man and the Sea', '1952-09-01', 4.4, 'Literary Fiction');
 
 -- Sample data for Reading List table
 INSERT INTO Reading_List (user_id, book_id, list_name, date_added, status) VALUES
@@ -121,26 +111,16 @@ INSERT INTO Reading_List (user_id, book_id, list_name, date_added, status) VALUE
 
 -- Sample data for Review table
 INSERT INTO Review (user_id, book_id, rating, review_text) VALUES
-(1, 1, 5, 'Great book!'),
-(1, 2, 3, 'It was okay.'),
-(2, 3, 4, 'Interesting read.'),
-(2, 4, 2, 'Not my type.'),
-(3, 5, 5, 'Loved it!'),
-(3, 6, 4, 'Good book.'),
-(4, 7, 3, 'Average.'),
-(4, 8, 5, 'Excellent!'),
-(5, 9, 4, 'Very good.'),
-(5, 10, 2, 'Could be better.'),
-(6, 11, 5, 'Amazing!'),
-(6, 12, 3, 'Not bad.'),
-(7, 13, 4, 'Enjoyed it.'),
-(7, 14, 2, 'Disappointing.'),
-(8, 15, 5, 'Fantastic!'),
-(8, 16, 4, 'Quite good.'),
-(9, 17, 3, 'Mediocre.'),
-(9, 18, 5, 'Superb!'),
-(10, 19, 4, 'Nice read.'),
-(10, 20, 2, 'Not great.');
+(1, 1, 5, 'A thrilling read from start to finish.'),
+(1, 2, 4, 'A classic romance with timeless appeal.'),
+(2, 3, 4, 'Beautiful and thought-provoking poetry.'),
+(2, 4, 3, 'An adventurous tale, but a bit dated.'),
+(3, 5, 5, 'A masterpiece of historical fiction.'),
+(3, 6, 4, 'A lengthy read, but worth it.'),
+(4, 7, 5, 'A chilling dystopian novel.'),
+(4, 8, 5, 'Magical and captivating.'),
+(5, 9, 4, 'A clever and engaging mystery.'),
+(5, 10, 3, 'A simple yet profound story.');
 
 -- Triggers to update avg_rating in Book table
 DELIMITER //
