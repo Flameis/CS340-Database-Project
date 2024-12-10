@@ -1,9 +1,9 @@
 <?php
 // Database connection variables
 $host = "classmysql.engr.oregonstate.edu"; // OSU MySQL server
-$db = "cs340_scovell"; // Your database name
-$user = "cs340_scovell"; // Your MySQL username
-$pass = "m8HzRPfy*#5wH#Z"; // Your MySQL password
+$db = "cs340_username"; // Your database name
+$user = "cs340_username"; // Your MySQL username
+$pass = "password"; // Your MySQL password
 
 // Create connection
 try {

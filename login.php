@@ -6,9 +6,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $password = $_POST['password'];
 
     $host = "classmysql.engr.oregonstate.edu";
-    $db = "cs340_scovell";
-    $user = "cs340_scovell";
-    $pass = "m8HzRPfy*#5wH#Z";
+    $db = "cs340_username";
+    $user = "cs340_username";
+    $pass = "password";
 
     try {
         $conn = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
