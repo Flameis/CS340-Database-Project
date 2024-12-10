@@ -1,0 +1,411 @@
+﻿CS340 Database Project
+Project Proposal
+Ohm Thakor, Luke Scovel, Nathaniel Wood, Kevin Nguyen
+
+
+Description:
+
+
+Our project will be a Book Review Web Application that allows users to review books, track books they have read, and search through books based on various factors like genre, author, rating, etc. User input will consist of rating books and writing reviews while the admins add and remove books from the database and delete reviews. There will be approximately 2000 users, 5000 books, and 500 authors.
+
+
+
+
+Requirements:
+
+
+* Users can view a database of books, filter by genre, author, or rating, and also be able to search for books.
+* Users can add a rating to books (1-5 stars) and provide a review.
+* Users can edit or delete their own reviews. 
+* Users can view the history of books they have read and reviewed.
+* Users can view detailed information about a book such as reviews, author, and genre. 
+* Users can create lists or groupings of books (wish list, specific genres, etc.)
+
+
+
+
+Business Rules:
+
+
+* Users can only have one review for a single book.
+* Users can review as many books as they want.
+* Books can have only one listing.
+* Authors cannot review their own book.
+* There will be a maximum of 100 books for each reading list.
+* The rating scale is 1-10
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Outline:
+
+
+Entities and Attributes
+
+
+* User
+   * user_id (Primary Key): Unique identifier for each user.
+   * username: Customizable name for users
+   * date_joined: Date the user joined
+   * role: (admin/user?)
+* Book
+   * book_id (Primary Key): Unique identifier for each book.
+   * author_id (Foreign Key): ID of the author(s) who wrote the book
+   * ISBN?
+   * title: Book title
+   * date_published: Date the book was published
+   * avg_rating: The average rating of the book (pulled from reviews)
+   * genre: Genre of the book
+* Author
+   * author_id (Primary Key): Unique identifier for each author.
+   * fname: Author’s first name
+   * name: Author’s last name
+* Reading List
+   * list_id (Primary Key): Unique identifier for each list.
+   * user_id (Foreign Key): ID of the user who read the book (links to User).
+   * book_id (Foreign Key): ID of the book that was read (links to Book).
+   * list_name: name of the Reading List
+   * date_added: Date when the book was marked as read. (or added to the list?)
+   * status: Multiple statuses? (to read, reading, read, dropped)
+* Review
+   * review_id (Primary Key): Unique identifier for each review.
+   * user_id (Foreign Key): ID of the user who wrote the review (links to User).
+   * book_id (Foreign Key): ID of the book being reviewed (links to Book).
+   * date_created: Date and time the review was created.
+   * date_updated: Date and time the review was last edited.
+   * rating: Rating left by user (out of 5 stars)
+   * review_text? : The review itself essentially
+
+
+Potential Relationships:
+
+
+* Read - One to Many relationship between User and Book
+* Reviewed - One to Many relationship between User and Book
+* Authored - Many to Many relationship between Author and Book
+________________
+
+
+CRUD
+
+
+* User
+   * Create: INSERT INTO User (user_id, username, date_joined, role)
+ VALUES (...);
+
+
+   * Read:         SELECT *
+ FROM User
+ WHERE user_id = (...);
+
+
+   * Update: UPDATE User
+ SET username = (...)
+ WHERE user_id = (...);
+
+
+   * Delete: DELETE FROM User
+ WHERE user_id = (...);
+
+
+* Book
+   * Create: INSERT INTO Book (book_id, author_id, ISBN, title, date_published, avg_rating, genre)
+ VALUES (...);
+
+
+   * Read:         SELECT *
+ FROM Book
+ WHERE book_id = (...);
+
+
+   * Update: UPDATE Book
+ SET avg_rating= (...)
+ WHERE book_id = (...);
+
+
+   * Delete: DELETE FROM Book
+ WHERE book_id = (...);
+
+
+* Author
+   * Create: INSERT INTO Author (author_id, fname, lname)
+ VALUES (...);
+
+
+   * Read:         SELECT *
+ FROM Author
+ WHERE author_id = (...);
+
+
+   * Update: UPDATE Author
+ SET fname = (...), name = (...)
+ WHERE author_id = (...);
+
+
+   * Delete: DELETE FROM Author
+ WHERE author_id = (...);
+
+
+* Reading List
+   * Create: INSERT INTO Reading_List (list_id, user_id, book_id, list_name, date_added, status)
+ VALUES (...);
+
+
+   * Read:         SELECT *
+ FROM Reading_List
+ WHERE list_id = (...);
+
+
+   * Update: UPDATE Reading_List
+ SET list_name = (...)
+ WHERE list_id = (...);
+
+
+   * Delete: DELETE FROM Reading_List
+ WHERE list_id = (...);
+
+
+* Review
+   * Create: INSERT INTO Review (review_id, user_id, book_id, date_created, date_updated, rating, review_text)
+ VALUES (...);
+
+
+   * Read:         SELECT *
+ FROM Review
+ WHERE review_id = (...);
+
+
+   * Update: UPDATE Review
+ SET rating = (...), review_text = (...)
+ WHERE review_id = (...);
+
+
+   * Delete: DELETE FROM Review
+ WHERE review_id = (...);
+________________
+
+
+
+
+ER Diagram
+  
+
+
+
+Relational Schema
+  
+
+________________
+
+
+Foreign Keys
+Book (book_id) to Review :
+* If a book is deleted, the review should also be deleted
+   * Action: ON DELETE SET NULL
+* Updating a book_id is not allowed
+   * Action: ON UPDATE RESTRICT
+
+
+User (user_id) to Review :
+* If a user is deleted, the review should be set to NULL
+   * Action: ON DELETE CASCADE
+* Updating a user_id is not allowed
+   * Action: ON UPDATE RESTRICT
+
+
+Author (author_id) to Book:
+* If an author is deleted, the book will remain in the database but the author_id will be set to NULL
+   * Action: ON DELETE SET NULL
+* Updating author_id is not allowed
+   * Action: ON UPDATE RESTRICT
+
+
+user_id and book_id in Reading List:
+* If a user is deleted, their reading list is also deleted
+   * Action: ON DELETE CASCADE
+* If a book is deleted, it should be removed from the reading list
+   * Action: ON DELETE CASCADE
+* Updating user_id and book_id should be restricted
+   * Action: ON UPDATE RESTRICT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Create Tables
+User:
+  
+
+
+Book:
+  
+
+
+
+Author:
+  
+
+
+
+Reading List:
+  
+
+Review:
+  
+
+
+
+________________
+Populate
+User:
+  
+
+Book:
+  
+Author:
+  
+
+Reading List:
+  
+Reviews:
+  
+
+
+SQL Queries
+1. INSERT INTO Review VALUES
+        (11, 7, 7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, "Overrated.");
+New row:   
+Updated average rating of book:
+  
+
+
+
+2. SELECT genre, AVG(avg_rating) AS average_rating
+FROM Book
+GROUP BY genre
+ORDER BY average_rating DESC;
+Result:
+  
+
+3. SELECT a.fname, a.lname, AVG(b.avg_rating) AS average_rating
+FROM Author a JOIN Book b
+ON a.author_id = b.author_id
+GROUP BY a.author_id, a.fname, a.lname
+ORDER BY average_rating DESC;
+        Result:
+          
+4. SELECT u.username, COUNT(r.review_id) AS total_reviews
+FROM User u JOIN Review r
+ON u.user_id = r.user_id
+GROUP BY u.user_id, u.username
+ORDER BY total_reviews DESC;
+Result:
+  
+
+5. UPDATE User
+        SET username = 'critic02'
+        WHERE user_id = 7;
+Result:
+  
+
+6. DELETE FROM Review
+        WHERE review_id = 11;
+Result:
+  
+
+Triggers
+Trigger 1: update_avg_rating
+
+
+Explanation: The trigger is executed after a new row is added to the Review table. This trigger updates the avg_rating with the book that is associated with the review. This is to ensure that the reviews for each book are up to date with its review and accurate. 
+
+
+CREATE TRIGGER `update_avg_rating` AFTER INSERT ON `Review`
+ FOR EACH ROW BEGIN
+        UPDATE Book
+        SET avg_rating = (
+            SELECT AVG(rating)
+            FROM Review
+            WHERE book_id = NEW.book_id
+        )
+        WHERE book_id = NEW.book_id;
+END
+
+
+
+
+Trigger 2: update_avg_rating_on_delete
+
+
+Explanation: The trigger is executed after a review has been removed from the Review table. It updates the avg_rating for the book associated with the removed review. This helps keep the books up to date with their reviews. 
+
+
+CREATE TRIGGER `update_avg_rating_on_delete` AFTER DELETE ON `Review`
+ FOR EACH ROW BEGIN
+        UPDATE Book
+        SET avg_rating = (
+            SELECT AVG(rating)
+            FROM Review
+            WHERE book_id = OLD.book_id
+        )
+        WHERE book_id = OLD.book_id;
+END
+
+
+
+
+Trigger 3: update_avg_rating_on_update
+
+
+Explanation: The trigger is executed after a review has been updated in the Review table. It updates the avg_rating for the book that was associated with the review that was updated. This helps ensure that the books are up to date with its reviews. 
+
+
+CREATE TRIGGER `update_avg_rating_on_update` AFTER UPDATE ON `Review`
+ FOR EACH ROW BEGIN
+        UPDATE Book
+        SET avg_rating = (
+            SELECT AVG(rating)
+            FROM Review
+            WHERE book_id = NEW.book_id
+        )
+        WHERE book_id = NEW.book_id;
+END
