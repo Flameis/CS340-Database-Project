@@ -9,8 +9,16 @@ DROP TABLE IF EXISTS User;
 CREATE TABLE User (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL,
+    password VARCHAR(255) NOT NULL,  -- Added password column
     date_joined DATE NOT NULL,
     role ENUM('admin', 'user') NOT NULL
+);
+
+-- Create Author table
+CREATE TABLE Author (
+    author_id INT AUTO_INCREMENT PRIMARY KEY,
+    fname VARCHAR(50) NOT NULL,
+    lname VARCHAR(50) NOT NULL
 );
 
 -- Create Book table
@@ -22,13 +30,6 @@ CREATE TABLE Book (
     avg_rating DECIMAL(3, 2),
     genre VARCHAR(50),
     FOREIGN KEY (author_id) REFERENCES Author(author_id) ON DELETE SET NULL ON UPDATE RESTRICT
-);
-
--- Create Author table
-CREATE TABLE Author (
-    author_id INT AUTO_INCREMENT PRIMARY KEY,
-    fname VARCHAR(50) NOT NULL,
-    lname VARCHAR(50) NOT NULL
 );
 
 -- Create Reading List table
@@ -57,17 +58,17 @@ CREATE TABLE Review (
 );
 
 -- Sample data for User table
-INSERT INTO User (username, date_joined, role) VALUES
-('user1', '2023-01-01', 'user'),
-('admin1', '2023-01-02', 'admin'),
-('user2', '2023-01-03', 'user'),
-('user3', '2023-01-04', 'user'),
-('user4', '2023-01-05', 'user'),
-('user5', '2023-01-06', 'user'),
-('user6', '2023-01-07', 'user'),
-('user7', '2023-01-08', 'user'),
-('user8', '2023-01-09', 'user'),
-('user9', '2023-01-10', 'user');
+INSERT INTO User (username, password, date_joined, role) VALUES
+('user1', 'password1', '2023-01-01', 'user'),
+('admin1', 'password2', '2023-01-02', 'admin'),
+('user2', 'password3', '2023-01-03', 'user'),
+('user3', 'password4', '2023-01-04', 'user'),
+('user4', 'password5', '2023-01-05', 'user'),
+('user5', 'password6', '2023-01-06', 'user'),
+('user6', 'password7', '2023-01-07', 'user'),
+('user7', 'password8', '2023-01-08', 'user'),
+('user8', 'password9', '2023-01-09', 'user'),
+('user9', 'password10', '2023-01-10', 'user');
 
 -- Sample data for Author table
 INSERT INTO Author (fname, lname) VALUES
@@ -142,28 +143,35 @@ INSERT INTO Review (user_id, book_id, rating, review_text) VALUES
 (10, 20, 2, 'Not great.');
 
 -- Triggers to update avg_rating in Book table
+DELIMITER //
+
 CREATE TRIGGER update_avg_rating AFTER INSERT ON Review
 FOR EACH ROW
 BEGIN
     UPDATE Book
-    SET avg_rating = (SELECT AVG(rating) FROM Review WHERE book_id = NEW.book_id)
+    SET avg_rating = (SELECT IFNULL(AVG(rating), 0) FROM Review WHERE book_id = NEW.book_id)
     WHERE book_id = NEW.book_id;
 END;
+//
 
 CREATE TRIGGER update_avg_rating_on_delete AFTER DELETE ON Review
 FOR EACH ROW
 BEGIN
     UPDATE Book
-    SET avg_rating = (SELECT AVG(rating) FROM Review WHERE book_id = OLD.book_id)
+    SET avg_rating = (SELECT IFNULL(AVG(rating), 0) FROM Review WHERE book_id = OLD.book_id)
     WHERE book_id = OLD.book_id;
 END;
+//
 
 CREATE TRIGGER update_avg_rating_on_update AFTER UPDATE ON Review
 FOR EACH ROW
 BEGIN
     UPDATE Book
-    SET avg_rating = (SELECT AVG(rating) FROM Review WHERE book_id = NEW.book_id)
+    SET avg_rating = (SELECT IFNULL(AVG(rating), 0) FROM Review WHERE book_id = NEW.book_id)
     WHERE book_id = NEW.book_id;
 END;
+//
+
+DELIMITER ;
 
 
