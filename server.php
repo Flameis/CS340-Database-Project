@@ -5,6 +5,10 @@ $db = "cs340_username"; // Your database name
 $user = "cs340_username"; // Your MySQL username
 $pass = "password"; // Your MySQL password
 
+// $db = "cs340_username"; // Your database name
+// $user = "cs340_username"; // Your MySQL username
+// $pass = "password"; // Your MySQL password
+
 // Create connection
 try {
     $conn = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
@@ -159,12 +163,20 @@ if ($action === 'getUserReviews') {
 if ($action === 'addToReadingList') {
     // Add a book to the reading list
     $data = json_decode(file_get_contents('php://input'), true);
-    $stmt = $conn->prepare("INSERT INTO Reading_List (user_id, book_id, list_name, date_added, status) VALUES (?, ?, ?, CURRENT_DATE, ?)");
-    try {
-        $stmt->execute([$data['user_id'], $data['book_id'], $data['list_name'], $data['status']]);
-        echo json_encode(["message" => "Book added to reading list successfully!"]);
-    } catch (PDOException $e) {
-        echo json_encode(["error" => "Failed to add book to reading list: " . $e->getMessage()]);
+    $stmt = $conn->prepare("SELECT * FROM Reading_List WHERE user_id = ? AND book_id = ? AND list_name = ?");
+    $stmt->execute([$data['user_id'], $data['book_id'], $data['list_name']]);
+    $existingEntry = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($existingEntry) {
+        echo json_encode(["error" => "Book is already in the reading list."]);
+    } else {
+        $stmt = $conn->prepare("INSERT INTO Reading_List (user_id, book_id, list_name, date_added, status) VALUES (?, ?, ?, CURRENT_DATE, ?)");
+        try {
+            $stmt->execute([$data['user_id'], $data['book_id'], $data['list_name'], $data['status']]);
+            echo json_encode(["message" => "Book added to reading list successfully!"]);
+        } catch (PDOException $e) {
+            echo json_encode(["error" => "Failed to add book to reading list: " . $e->getMessage()]);
+        }
     }
 }
 
@@ -187,10 +199,11 @@ if ($action === 'getReadingList') {
     $user_id = $_GET['user_id'];
     $list_name = $_GET['list_name'] ?? '';
     $sort_by = $_GET['sort_by'] ?? 'status';
-    $valid_sort_columns = ['status', 'genre', 'author', 'rating'];
+    $valid_sort_columns = ['status', 'genre', 'title', 'author'];
     if (!in_array($sort_by, $valid_sort_columns)) {
         $sort_by = 'status';
     }
+    $sort_column = $sort_by === 'author' ? 'Author.lname' : $sort_by;
     $stmt = $conn->prepare("
         SELECT Reading_List.list_id, Reading_List.list_name, Reading_List.date_added, Reading_List.status, 
                Book.book_id, Book.title, Book.genre, Book.avg_rating, 
@@ -199,7 +212,7 @@ if ($action === 'getReadingList') {
         JOIN Book ON Reading_List.book_id = Book.book_id
         JOIN Author ON Book.author_id = Author.author_id
         WHERE Reading_List.user_id = ? AND Reading_List.list_name = ?
-        ORDER BY $sort_by
+        ORDER BY $sort_column
     ");
     $stmt->execute([$user_id, $list_name]);
     $readingList = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -249,10 +262,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 // Delete a reading list
 if ($action === 'deleteReadingList') {
-    $list_id = intval($_GET['list_id']);
+    $user_id = $_GET['user_id'];
+    $list_name = $_GET['list_name'];
     try {
-        $stmt = $conn->prepare("DELETE FROM Reading_List WHERE list_id = ?");
-        $stmt->execute([$list_id]);
+        $stmt = $conn->prepare("DELETE FROM Reading_List WHERE user_id = ? AND list_name = ?");
+        $stmt->execute([$user_id, $list_name]);
         echo json_encode(["message" => "Reading list deleted successfully!"]);
     } catch (PDOException $e) {
         echo json_encode(["error" => "Failed to delete reading list: " . $e->getMessage()]);

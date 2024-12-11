@@ -40,6 +40,16 @@
                 <select id="reading-list-select" onchange="fetchReadingList(<?php echo $_SESSION['user_id']; ?>)">
                     <!-- Options will be populated by JavaScript -->
                 </select>
+                <button onclick="deleteSelectedReadingList()">Delete Reading List</button>
+            </div>
+            <div>
+                <label for="sort-by-select">Sort By:</label>
+                <select id="sort-by-select" onchange="fetchReadingList(<?php echo $_SESSION['user_id']; ?>)">
+                    <option value="status">Status</option>
+                    <option value="genre">Genre</option>
+                    <option value="title">Title</option>
+                    <option value="author">Author</option>
+                </select>
             </div>
             <div id="reading-list-details"></div>
 
@@ -67,9 +77,10 @@
 
         async function fetchReadingList(userId) {
             const listName = document.getElementById("reading-list-select").value;
+            const sortBy = document.getElementById("sort-by-select").value;
             if (!listName) return;
             try {
-                const response = await fetch(`server.php?action=getReadingList&user_id=${userId}&list_name=${listName}`);
+                const response = await fetch(`server.php?action=getReadingList&user_id=${userId}&list_name=${listName}&sort_by=${sortBy}`);
                 const readingList = await response.json();
                 const readingListDetails = document.getElementById("reading-list-details");
                 readingListDetails.innerHTML = "";
@@ -224,6 +235,28 @@
                 }
             } catch (err) {
                 console.error("Error fetching reviews:", err);
+            }
+        }
+
+        async function deleteSelectedReadingList() {
+            const listName = document.getElementById("reading-list-select").value;
+            if (!listName) {
+                alert("Please select a reading list to delete.");
+                return;
+            }
+            const userId = <?php echo $_SESSION['user_id']; ?>;
+            try {
+                const response = await fetch(`server.php?action=deleteReadingList&user_id=${userId}&list_name=${listName}`, { method: "GET" });
+                const result = await response.json();
+                if (result.message) {
+                    alert(result.message);
+                    fetchReadingLists(userId);
+                    document.getElementById("reading-list-details").innerHTML = "";
+                } else {
+                    alert(result.error);
+                }
+            } catch (err) {
+                console.error("Error deleting reading list:", err);
             }
         }
 
