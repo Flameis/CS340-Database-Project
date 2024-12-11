@@ -100,15 +100,20 @@ if ($action === 'filterBooks') {
     $author = $_GET['author'] ?? '';
     $rating = $_GET['rating'] ?? '';
 
-    $query = "SELECT * FROM Book WHERE 1=1";
+    $query = "
+        SELECT Book.*, Author.fname, Author.lname 
+        FROM Book 
+        JOIN Author ON Book.author_id = Author.author_id 
+        WHERE 1=1
+    ";
     $params = [];
     if ($genre) {
         $query .= " AND genre = ?";
         $params[] = $genre;
     }
     if ($author) {
-        $query .= " AND author_id = ?";
-        $params[] = $author;
+        $query .= " AND CONCAT(Author.fname, ' ', Author.lname) LIKE ?";
+        $params[] = '%' . $author . '%';
     }
     if ($rating) {
         $query .= " AND avg_rating >= ?";
@@ -166,7 +171,12 @@ if ($action === 'addToReadingList') {
 if ($action === 'searchBooks') {
     // Search books by title
     $searchTerm = $_GET['searchTerm'] ?? '';
-    $stmt = $conn->prepare("SELECT * FROM Book WHERE title LIKE ?");
+    $stmt = $conn->prepare("
+        SELECT Book.*, Author.fname, Author.lname 
+        FROM Book 
+        JOIN Author ON Book.author_id = Author.author_id 
+        WHERE title LIKE ?
+    ");
     $stmt->execute(['%' . $searchTerm . '%']);
     $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
     echo json_encode($books);
@@ -175,19 +185,23 @@ if ($action === 'searchBooks') {
 if ($action === 'getReadingList') {
     // Get the reading list for a specific user
     $user_id = $_GET['user_id'];
+    $list_name = $_GET['list_name'] ?? '';
     $sort_by = $_GET['sort_by'] ?? 'status';
     $valid_sort_columns = ['status', 'genre', 'author', 'rating'];
     if (!in_array($sort_by, $valid_sort_columns)) {
         $sort_by = 'status';
     }
     $stmt = $conn->prepare("
-        SELECT Reading_List.*, Book.genre, Author.fname, Author.lname, Book.avg_rating
+        SELECT Reading_List.list_id, Reading_List.list_name, Reading_List.date_added, Reading_List.status, 
+               Book.book_id, Book.title, Book.genre, Book.avg_rating, 
+               Author.fname, Author.lname
         FROM Reading_List
         JOIN Book ON Reading_List.book_id = Book.book_id
         JOIN Author ON Book.author_id = Author.author_id
-        WHERE Reading_List.user_id = ?
+        WHERE Reading_List.user_id = ? AND Reading_List.list_name = ?
+        ORDER BY $sort_by
     ");
-    $stmt->execute([$user_id]);
+    $stmt->execute([$user_id, $list_name]);
     $readingList = $stmt->fetchAll(PDO::FETCH_ASSOC);
     echo json_encode($readingList);
 }
@@ -211,14 +225,13 @@ if ($action === 'getRole') {
 
 if ($action === 'deleteBook') {
     $book_id = $_GET['book_id'];
-    $stmt = $conn->prepare("DELETE FROM Book WHERE book_id = ?");
-    if ($stmt->execute([$book_id])) {
-        $response = ['status' => 'success'];
+    try {
+        $stmt = $conn->prepare("DELETE FROM Book WHERE book_id = ?");
+        $stmt->execute([$book_id]);
+        echo json_encode(["message" => "Book deleted successfully!"]);
+    } catch (PDOException $e) {
+        echo json_encode(["error" => "Failed to delete book: " . $e->getMessage()]);
     }
-    else {
-        $response = ['status' => 'error'];
-    }
-    echo json_encode($response);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'createReadingList') {
@@ -245,6 +258,63 @@ if ($action === 'deleteReadingList') {
         echo json_encode(["error" => "Failed to delete reading list: " . $e->getMessage()]);
     }
     exit;
+}
+
+// Add a new book
+if ($action === 'addBook') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $authorName = $data['author_name'];
+    $title = $data['title'];
+    $datePublished = $data['date_published'];
+    $genre = $data['genre'];
+
+    // Split author name into first name and last name
+    $authorNameParts = explode(' ', $authorName);
+    $fname = $authorNameParts[0];
+    $lname = isset($authorNameParts[1]) ? $authorNameParts[1] : '';
+
+    try {
+        // Check if author exists
+        $stmt = $conn->prepare("SELECT author_id FROM Author WHERE fname = ? AND lname = ?");
+        $stmt->execute([$fname, $lname]);
+        $author = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($author) {
+            $authorId = $author['author_id'];
+        } else {
+            // Insert new author
+            $stmt = $conn->prepare("INSERT INTO Author (fname, lname) VALUES (?, ?)");
+            $stmt->execute([$fname, $lname]);
+            $authorId = $conn->lastInsertId();
+        }
+
+        // Check if book already exists
+        $stmt = $conn->prepare("SELECT * FROM Book WHERE title = ? AND author_id = ?");
+        $stmt->execute([$title, $authorId]);
+        $book = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($book) {
+            echo json_encode(["error" => "Book already exists."]);
+        } else {
+            $stmt = $conn->prepare("INSERT INTO Book (author_id, title, date_published, avg_rating, genre) VALUES (?, ?, ?, 0, ?)");
+            $stmt->execute([$authorId, $title, $datePublished, $genre]);
+            echo json_encode(["message" => "Book added successfully!"]);
+        }
+    } catch (PDOException $e) {
+        echo json_encode(["error" => "Failed to add book: " . $e->getMessage()]);
+    }
+}
+
+// Remove a book from the reading list
+if ($action === 'removeFromReadingList') {
+    $list_id = $_GET['list_id'];
+    try {
+        $stmt = $conn->prepare("DELETE FROM Reading_List WHERE list_id = ?");
+        $stmt->execute([$list_id]);
+        echo json_encode(["message" => "Book removed from reading list successfully!"]);
+    } catch (PDOException $e) {
+        echo json_encode(["error" => "Failed to remove book from reading list: " . $e->getMessage()]);
+    }
 }
 
 // Fallback for invalid actions

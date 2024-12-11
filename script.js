@@ -3,9 +3,10 @@ document.getElementById("search-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const searchTerm = document.getElementById("search-input").value;
     try {
+        const admin = await isUserAdmin();
         const response = await fetch(`server.php?action=searchBooks&searchTerm=${searchTerm}`);
         const books = await response.json();
-        displayBooks(books);
+        displayBooks(books, admin);
     } catch (err) {
         console.error("Error searching books:", err);
     }
@@ -18,9 +19,10 @@ document.getElementById("filter-form").addEventListener("submit", async (e) => {
     const author = document.getElementById("filter-author").value;
     const rating = document.getElementById("filter-rating").value;
     try {
+        const admin = await isUserAdmin();
         const response = await fetch(`server.php?action=filterBooks&genre=${genre}&author=${author}&rating=${rating}`);
         const books = await response.json();
-        displayBooks(books);
+        displayBooks(books, admin);
     } catch (err) {
         console.error("Error filtering books:", err);
     }
@@ -43,7 +45,7 @@ async function isUserAdmin() {
 }
 
 // Function to display books -- NOT THE MAIN DISPLAY
-function displayBooks(books) {
+function displayBooks(books, admin) {
     const bookList = document.getElementById("book-list");
     bookList.innerHTML = "";
     books.forEach((book) => {
@@ -56,6 +58,7 @@ function displayBooks(books) {
             <button onclick="viewBookDetails(${book.book_id})">View Details</button>
             <button onclick="addToReadingList(${book.book_id})">Add to Reading List</button>
             <button onclick="showReviewPopup(${book.book_id})">Add Review</button>
+            ${admin ? `<button onclick="deleteBook(${book.book_id})">Delete</button>` : ''}
         `;
         bookList.appendChild(li);
     });
@@ -124,24 +127,24 @@ function closePopup() {
 // Function to fetch reviews for a book
 async function fetchReviews(bookId) {
     try {
-        const userId = document.getElementById("user_id").value;
-        const userRole = document.getElementById("user_role").value;
         const response = await fetch(`server.php?action=getReviews&book_id=${bookId}`);
         const reviews = await response.json();
         const reviewsList = document.getElementById("reviews-list");
-        reviewsList.innerHTML = "";
-        reviews.forEach((review) => {
-            const li = document.createElement("li");
-            li.innerHTML = `
-                User: ${review.username}, Rating: ${review.rating} <br>
-                Review: ${review.review_text}
-                ${review.user_id == userId || userRole == 'admin' ? `
-                <button onclick="deleteReview(${review.review_id})">Delete</button>
-                <button onclick="editReviewPrompt(${review.review_id}, ${review.rating}, '${review.review_text}')">Edit</button>
-                ` : ''}
-            `;
-            reviewsList.appendChild(li);
-        });
+        if (reviewsList) {
+            reviewsList.innerHTML = "";
+            reviews.forEach((review) => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    User: ${review.username}, Rating: ${review.rating} <br>
+                    Review: ${review.review_text}
+                    ${review.user_id == userId || userRole == 'admin' ? `
+                    <button onclick="deleteReview(${review.review_id})">Delete</button>
+                    <button onclick="editReviewPrompt(${review.review_id}, ${review.rating}, '${review.review_text}')">Edit</button>
+                    ` : ''}
+                `;
+                reviewsList.appendChild(li);
+            });
+        }
     } catch (err) {
         console.error("Error fetching reviews:", err);
     }
@@ -200,21 +203,15 @@ async function editReview(reviewId, newRating, newText) {
 
 async function deleteBook(bookId) {
     try {
-        const response = await fetch(`server.php?action=deleteBook&book_id=${bookId}`);
-
-        if (response.ok) {
-            const result = await response.json();
-
-            if (result.status === 'success') {
-                alert("Book successfully deleted");
-                await fetchBooks();
-            }
-            else {
-                alert(`Could not delete book`);
-            }
+        const response = await fetch(`server.php?action=deleteBook&book_id=${bookId}`, { method: "GET" });
+        const result = await response.json();
+        if (result.message) {
+            alert(result.message);
+            fetchBooks();
+        } else {
+            alert(result.error);
         }
-    }
-    catch (error) {
+    } catch (error) {
         console.error("Error deleting book:", error);
     }
 }
@@ -225,22 +222,7 @@ async function fetchBooks() {
         const admin = await isUserAdmin();
         const response = await fetch("server.php?action=getBooks");
         const books = await response.json();
-        const bookList = document.getElementById("book-list");
-        bookList.innerHTML = "";
-        books.forEach((book) => {
-            const li = document.createElement("li");
-            li.className = "book-item";
-            li.innerHTML = `
-                <strong>${book.title}</strong> by ${book.fname} ${book.lname} <br>
-                Genre: ${book.genre} <br>
-                Rating: ${book.avg_rating}
-                <button onclick="viewBookDetails(${book.book_id})">View Details</button>
-                <button onclick="addToReadingList(${book.book_id})">Add to Reading List</button>
-                <button onclick="showReviewPopup(${book.book_id})">Add Review</button>
-                ${admin ? `<button onclick="deleteBook(${book.book_id})">Delete</button>` : ''}
-            `;
-            bookList.appendChild(li);
-        });
+        displayBooks(books, admin);
     } catch (err) {
         console.error("Error fetching books:", err);
     }
@@ -274,17 +256,19 @@ async function fetchUserReviews(userId) {
         const response = await fetch(`server.php?action=getUserReviews&user_id=${userId}`);
         const reviews = await response.json();
         const userReviewsList = document.getElementById("user-reviews-list");
-        userReviewsList.innerHTML = "";
-        reviews.forEach((review) => {
-            const li = document.createElement("li");
-            li.innerHTML = `
-                Book ID: ${review.book_id}, Rating: ${review.rating} <br>
-                Review: ${review.review_text}
-                <button onclick="deleteReview(${review.review_id})">Delete</button>
-                <button onclick="editReviewPrompt(${review.review_id}, ${review.rating}, '${review.review_text}')">Edit</button>
-            `;
-            userReviewsList.appendChild(li);
-        });
+        if (userReviewsList) {
+            userReviewsList.innerHTML = "";
+            reviews.forEach((review) => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    Book ID: ${review.book_id}, Rating: ${review.rating} <br>
+                    Review: ${review.review_text}
+                    <button onclick="deleteReview(${review.review_id})">Delete</button>
+                    <button onclick="editReviewPrompt(${review.review_id}, ${review.rating}, '${review.review_text}')">Edit</button>
+                `;
+                userReviewsList.appendChild(li);
+            });
+        }
     } catch (err) {
         console.error("Error fetching user reviews:", err);
     }
@@ -366,20 +350,34 @@ async function addToReadingList(bookId) {
 
 // Function to fetch the reading list
 async function fetchReadingList(userId) {
-    const sortBy = document.getElementById("sort-reading-list").value;
+    const listNameElement = document.getElementById("reading-list-select");
+    if (!listNameElement) {
+        console.error("Element with id 'reading-list-select' not found.");
+        return;
+    }
+    const listName = listNameElement.value;
+    if (!listName) return;
     try {
-        const response = await fetch(`server.php?action=getReadingList&user_id=${userId}&sort_by=${sortBy}`);
+        const response = await fetch(`server.php?action=getReadingList&user_id=${userId}&list_name=${listName}`);
         const readingList = await response.json();
-        const readingListElement = document.getElementById("reading-list");
-        readingListElement.innerHTML = "";
-        readingList.forEach((item) => {
-            const li = document.createElement("li");
-            li.innerHTML = `
-                Book ID: ${item.book_id}, List: ${item.list_name}, Status: ${item.status} <br>
-                Date Added: ${item.date_added}
-            `;
-            readingListElement.appendChild(li);
-        });
+        const readingListDetails = document.getElementById("reading-list-details");
+        if (readingListDetails) {
+            readingListDetails.innerHTML = "";
+
+            readingList.forEach((item) => {
+                const div = document.createElement("div");
+                div.className = "reading-list-box";
+                div.innerHTML = `
+                    <p>Book: ${item.title}</p>
+                    <p>Author: ${item.fname} ${item.lname}</p>
+                    <p>Genre: ${item.genre}</p>
+                    <p>Status: ${item.status}</p>
+                    <p>Date Added: ${item.date_added}</p>
+                    <button onclick="removeFromReadingList(${item.list_id})">Remove</button>
+                `;
+                readingListDetails.appendChild(div);
+            });
+        }
     } catch (err) {
         console.error("Error fetching reading list:", err);
     }
@@ -396,3 +394,137 @@ fetchUserReviews(document.getElementById("user_id").value);
 
 // Load reading list on page load
 fetchReadingList(document.getElementById("user_id").value);
+
+// Function to add a book
+async function addBook(authorName, title, datePublished, genre) {
+    const data = { author_name: authorName, title: title, date_published: datePublished, genre: genre };
+    try {
+        const response = await fetch("server.php?action=addBook", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        });
+        const result = await response.json();
+        if (result.message) {
+            alert(result.message);
+            fetchBooks();
+        } else {
+            alert(result.error);
+        }
+    } catch (err) {
+        console.error("Error adding book:", err);
+        alert("Error adding book: " + err.message);
+    }
+}
+
+function showAddBookPopup() {
+    const popup = document.createElement('div');
+    popup.className = 'custom-popup';
+    popup.innerHTML = `
+        <div class="popup-content">
+            <h3>Add New Book</h3>
+            <form id="add-book-form">
+                <label for="author-name">Author Name:</label>
+                <input type="text" id="author-name" name="author_name" required>
+                <label for="title">Title:</label>
+                <input type="text" id="title" name="title" required>
+                <label for="date-published">Date Published:</label>
+                <input type="date" id="date-published" name="date_published" required>
+                <label for="genre">Genre:</label>
+                <input type="text" id="genre" name="genre" required>
+                <button type="submit">Add Book</button>
+                <button type="button" onclick="closePopup()">Cancel</button>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(popup);
+
+    document.getElementById('add-book-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const authorName = document.getElementById('author-name').value;
+        const title = document.getElementById('title').value;
+        const datePublished = document.getElementById('date-published').value;
+        const genre = document.getElementById('genre').value;
+        await addBook(authorName, title, datePublished, genre);
+        closePopup();
+    });
+}
+
+function closePopup() {
+    const popup = document.querySelector('.custom-popup');
+    if (popup) {
+        document.body.removeChild(popup);
+    }
+}
+
+// Function to delete a book
+async function deleteBook(bookId) {
+    try {
+        const response = await fetch(`server.php?action=deleteBook&book_id=${bookId}`, { method: "GET" });
+        const result = await response.json();
+        if (result.message) {
+            alert(result.message);
+            fetchBooks();
+        } else {
+            alert(result.error);
+        }
+    } catch (error) {
+        console.error("Error deleting book:", error);
+    }
+}
+
+// Function to remove a book from the reading list
+async function removeFromReadingList(listId) {
+    try {
+        const response = await fetch(`server.php?action=removeFromReadingList&list_id=${listId}`);
+        const result = await response.json();
+        if (result.message) {
+            alert(result.message);
+            fetchReadingList(document.getElementById("user_id").value);
+        } else {
+            alert(result.error);
+        }
+    } catch (err) {
+        console.error("Error removing book from reading list:", err);
+    }
+}
+
+function showAddBookPopup() {
+    const popup = document.createElement('div');
+    popup.className = 'custom-popup';
+    popup.innerHTML = `
+        <div class="popup-content">
+            <h3>Add New Book</h3>
+            <form id="add-book-form">
+                <label for="author-name">Author Name:</label>
+                <input type="text" id="author-name" name="author_name" required>
+                <label for="title">Title:</label>
+                <input type="text" id="title" name="title" required>
+                <label for="date-published">Date Published:</label>
+                <input type="date" id="date-published" name="date_published" required>
+                <label for="genre">Genre:</label>
+                <input type="text" id="genre" name="genre" required>
+                <button type="submit">Add Book</button>
+                <button type="button" onclick="closePopup()">Cancel</button>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(popup);
+
+    document.getElementById('add-book-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const authorName = document.getElementById('author-name').value;
+        const title = document.getElementById('title').value;
+        const datePublished = document.getElementById('date-published').value;
+        const genre = document.getElementById('genre').value;
+        await addBook(authorName, title, datePublished, genre);
+        closePopup();
+    });
+}
+
+function closePopup() {
+    const popup = document.querySelector('.custom-popup');
+    if (popup) {
+        document.body.removeChild(popup);
+    }
+}

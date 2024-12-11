@@ -32,6 +32,9 @@
             <div id="book-details" class="book-details"></div>
         </div>
         <div class="main-content">
+            <?php if ($_SESSION['role'] == 'admin') { ?>
+                <button onclick="showAddBookPopup()">Add New Book</button>
+            <?php } ?>
             <h2>Search Books</h2>
             <form id="search-form" class="search-bar">
                 <input type="text" id="search-input" placeholder="Search by title">
@@ -51,7 +54,25 @@
             <ul id="book-list" class="book-list"></ul>
         </div>
     </div>
-    
+
+    <div id="add-book-popup" class="custom-popup" style="display: none;">
+        <div class="popup-content">
+            <h3>Add New Book</h3>
+            <form id="add-book-form">
+                <label for="author-name">Author Name:</label>
+                <input type="text" id="author-name" name="author_name" required>
+                <label for="title">Title:</label>
+                <input type="text" id="title" name="title" required>
+                <label for="date-published">Date Published:</label>
+                <input type="date" id="date-published" name="date_published" required>
+                <label for="genre">Genre:</label>
+                <input type="text" id="genre" name="genre" required>
+                <button type="submit">Add Book</button>
+                <button type="button" onclick="closeAddBookPopup()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

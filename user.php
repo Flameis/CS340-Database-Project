@@ -36,37 +36,56 @@
                 </form>
             </div>
             <div>
-                <label for="sort-reading-list">Sort by:</label>
-                <select id="sort-reading-list" onchange="fetchReadingList(<?php echo $_SESSION['user_id']; ?>)">
-                    <option value="status">Status</option>
-                    <option value="genre">Genre</option>
-                    <option value="author">Author</option>
-                    <option value="rating">Rating</option>
+                <label for="reading-list-select">Select Reading List:</label>
+                <select id="reading-list-select" onchange="fetchReadingList(<?php echo $_SESSION['user_id']; ?>)">
+                    <!-- Options will be populated by JavaScript -->
                 </select>
             </div>
-            <div id="reading-lists"></div>
+            <div id="reading-list-details"></div>
 
             <h2>My Reviews</h2>
             <ul id="user-reviews-list"></ul>
         </div>
     </div>
     <script>
-        async function fetchReadingList(userId) {
-            const sortBy = document.getElementById("sort-reading-list").value;
+        async function fetchReadingLists(userId) {
             try {
-                const response = await fetch(`server.php?action=getReadingList&user_id=${userId}&sort_by=${sortBy}`);
-                const readingList = await response.json();
-                const readingListsElement = document.getElementById("reading-lists");
-                readingListsElement.innerHTML = "";
+                const response = await fetch(`server.php?action=getUserReadingLists&user_id=${userId}`);
+                const readingLists = await response.json();
+                const readingListSelect = document.getElementById("reading-list-select");
+                readingListSelect.innerHTML = "<option value=''>Select a reading list</option>";
+                readingLists.forEach((list) => {
+                    const option = document.createElement("option");
+                    option.value = list.list_name;
+                    option.textContent = list.list_name;
+                    readingListSelect.appendChild(option);
+                });
+            } catch (err) {
+                console.error("Error fetching reading lists:", err);
+            }
+        }
 
-                readingList.forEach((list) => {
-                    const listDiv = document.createElement("div");
-                    listDiv.className = "reading-list-box";
-                    listDiv.innerHTML = `
-                        <h3>${list.list_name}</h3>
-                        <button onclick="deleteReadingList(${list.list_id})">Delete</button>
+        async function fetchReadingList(userId) {
+            const listName = document.getElementById("reading-list-select").value;
+            if (!listName) return;
+            try {
+                const response = await fetch(`server.php?action=getReadingList&user_id=${userId}&list_name=${listName}`);
+                const readingList = await response.json();
+                const readingListDetails = document.getElementById("reading-list-details");
+                readingListDetails.innerHTML = "";
+
+                readingList.forEach((item) => {
+                    const div = document.createElement("div");
+                    div.className = "reading-list-box";
+                    div.innerHTML = `
+                        <p>Book: ${item.title}</p>
+                        <p>Author: ${item.fname} ${item.lname}</p>
+                        <p>Genre: ${item.genre}</p>
+                        <p>Status: ${item.status}</p>
+                        <p>Date Added: ${item.date_added}</p>
+                        <button onclick="removeFromReadingList(${item.list_id})">Remove</button>
                     `;
-                    readingListsElement.appendChild(listDiv);
+                    readingListDetails.appendChild(div);
                 });
             } catch (err) {
                 console.error("Error fetching reading list:", err);
@@ -168,9 +187,49 @@
             }
         }
 
-        // Load reading list and reviews on page load
+        async function removeFromReadingList(listId) {
+            try {
+                const response = await fetch(`server.php?action=removeFromReadingList&list_id=${listId}`, { method: "GET" });
+                const result = await response.json();
+                if (result.message) {
+                    alert(result.message);
+                    fetchReadingList(<?php echo $_SESSION['user_id']; ?>);
+                } else {
+                    alert(result.error);
+                }
+            } catch (err) {
+                console.error("Error removing book from reading list:", err);
+            }
+        }
+
+        async function fetchReviews(bookId) {
+            try {
+                const response = await fetch(`server.php?action=getReviews&book_id=${bookId}`);
+                const reviews = await response.json();
+                const reviewsList = document.getElementById("reviews-list");
+                if (reviewsList) {
+                    reviewsList.innerHTML = "";
+                    reviews.forEach((review) => {
+                        const li = document.createElement("li");
+                        li.innerHTML = `
+                            User: ${review.username}, Rating: ${review.rating} <br>
+                            Review: ${review.review_text}
+                            ${review.user_id == userId || userRole == 'admin' ? `
+                            <button onclick="deleteReview(${review.review_id})">Delete</button>
+                            <button onclick="editReviewPrompt(${review.review_id}, ${review.rating}, '${review.review_text}')">Edit</button>
+                            ` : ''}
+                        `;
+                        reviewsList.appendChild(li);
+                    });
+                }
+            } catch (err) {
+                console.error("Error fetching reviews:", err);
+            }
+        }
+
+        // Load reading lists and reviews on page load
         const userId = <?php echo $_SESSION['user_id']; ?>;
-        fetchReadingList(userId);
+        fetchReadingLists(userId);
         fetchUserReviews(userId);
 
         document.getElementById('create-reading-list-form').addEventListener('submit', async (e) => {
@@ -178,7 +237,7 @@
             const listName = document.getElementById('list_name').value.trim();
             if (listName) {
                 await createReadingList(userId, listName);
-                fetchReadingList(userId);
+                fetchReadingLists(userId);
                 document.getElementById('list_name').value = '';
             }
         });
