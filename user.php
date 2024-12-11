@@ -17,7 +17,7 @@
 <body>
     <div class="header">
         <h1>My Profile</h1>
-        <div>
+        <div class="mainpage-button">
             <a href="index.php"><button>Back to Main Page</button></a>
         </div>
         <div class="logout-button">
