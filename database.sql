@@ -274,7 +274,6 @@ INSERT INTO Review (user_id, book_id, rating, review_text) VALUES
 (4, 28, 4, 'A haunting and powerful novel.'),
 (5, 29, 5, 'A profound exploration of identity.'),
 (5, 30, 4, 'A powerful social protest novel.'),
--- Additional 100 reviews
 (1, 1, 5, 'Another thrilling read.'),
 (2, 2, 4, 'Another classic romance.'),
 (3, 3, 4, 'More beautiful poetry.'),

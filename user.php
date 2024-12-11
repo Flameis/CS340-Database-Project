@@ -149,7 +149,8 @@
                 reviews.forEach((review) => {
                     const li = document.createElement("li");
                     li.innerHTML = `
-                        Book ID: ${review.book_id}, Rating: ${review.rating} <br>
+                        Book: ${review.title} <br>
+                        Rating: ${review.rating} <br>
                         Review: ${review.review_text}
                         <button onclick="deleteReview(${review.review_id})">Delete</button>
                         <button onclick="editReviewPrompt(${review.review_id}, ${review.rating}, '${review.review_text}')">Edit</button>
