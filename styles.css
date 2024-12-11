@@ -120,6 +120,46 @@ tr:hover {
     font-size: 18px; 
 }
 
+.profile-button {
+    margin-left: auto;
+    margin-right: 20px;
+    padding-bottom: 18px;
+}
+
+.profile-button a button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.profile-button a button:hover {
+    background-color: #0056b3;
+}
+
+.mainpage-button {
+    margin-left: auto;
+    margin-right: 20px;
+    padding-bottom: 18px;
+}
+
+.mainpage-button a button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.mainpage-button a button:hover {
+    background-color: #0056b3;
+}
+
 .logout-button {
     margin-right: 10px;
 }
@@ -279,5 +319,6 @@ input:focus, textarea:focus {
 .popup-content button {
     margin-top: 15px;
 }
+
 
 
