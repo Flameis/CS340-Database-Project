@@ -5,6 +5,11 @@ DROP TABLE IF EXISTS Book;
 DROP TABLE IF EXISTS Author;
 DROP TABLE IF EXISTS User;
 
+-- Drop existing triggers if they exist
+DROP TRIGGER IF EXISTS update_avg_rating;
+DROP TRIGGER IF EXISTS update_avg_rating_on_delete;
+DROP TRIGGER IF EXISTS update_avg_rating_on_update;
+
 -- Create User table
 CREATE TABLE User (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -56,6 +61,38 @@ CREATE TABLE Review (
     FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE ON UPDATE RESTRICT,
     FOREIGN KEY (book_id) REFERENCES Book(book_id) ON DELETE SET NULL ON UPDATE RESTRICT
 );
+
+-- Triggers to update avg_rating in Book table
+DELIMITER //
+
+CREATE TRIGGER update_avg_rating AFTER INSERT ON Review
+FOR EACH ROW
+BEGIN
+    UPDATE Book
+    SET avg_rating = (SELECT COALESCE(AVG(rating), 0) FROM Review WHERE book_id = NEW.book_id)
+    WHERE book_id = NEW.book_id;
+END;
+//
+
+CREATE TRIGGER update_avg_rating_on_delete AFTER DELETE ON Review
+FOR EACH ROW
+BEGIN
+    UPDATE Book
+    SET avg_rating = (SELECT COALESCE(AVG(rating), 0) FROM Review WHERE book_id = OLD.book_id)
+    WHERE book_id = OLD.book_id;
+END;
+//
+
+CREATE TRIGGER update_avg_rating_on_update AFTER UPDATE ON Review
+FOR EACH ROW
+BEGIN
+    UPDATE Book
+    SET avg_rating = (SELECT COALESCE(AVG(rating), 0) FROM Review WHERE book_id = NEW.book_id)
+    WHERE book_id = NEW.book_id;
+END;
+//
+
+DELIMITER ;
 
 -- Sample data for User table
 INSERT INTO User (username, password, date_joined, role) VALUES
@@ -122,36 +159,5 @@ INSERT INTO Review (user_id, book_id, rating, review_text) VALUES
 (5, 9, 4, 'A clever and engaging mystery.'),
 (5, 10, 3, 'A simple yet profound story.');
 
--- Triggers to update avg_rating in Book table
-DELIMITER //
-
-CREATE TRIGGER update_avg_rating AFTER INSERT ON Review
-FOR EACH ROW
-BEGIN
-    UPDATE Book
-    SET avg_rating = (SELECT IFNULL(AVG(rating), 0) FROM Review WHERE book_id = NEW.book_id)
-    WHERE book_id = NEW.book_id;
-END;
-//
-
-CREATE TRIGGER update_avg_rating_on_delete AFTER DELETE ON Review
-FOR EACH ROW
-BEGIN
-    UPDATE Book
-    SET avg_rating = (SELECT IFNULL(AVG(rating), 0) FROM Review WHERE book_id = OLD.book_id)
-    WHERE book_id = OLD.book_id;
-END;
-//
-
-CREATE TRIGGER update_avg_rating_on_update AFTER UPDATE ON Review
-FOR EACH ROW
-BEGIN
-    UPDATE Book
-    SET avg_rating = (SELECT IFNULL(AVG(rating), 0) FROM Review WHERE book_id = NEW.book_id)
-    WHERE book_id = NEW.book_id;
-END;
-//
-
-DELIMITER ;
 
 
