@@ -5,6 +5,11 @@ DROP TABLE IF EXISTS Book;
 DROP TABLE IF EXISTS Author;
 DROP TABLE IF EXISTS User;
 
+-- Drop existing triggers if they exist
+DROP TRIGGER IF EXISTS update_avg_rating;
+DROP TRIGGER IF EXISTS update_avg_rating_on_delete;
+DROP TRIGGER IF EXISTS update_avg_rating_on_update;
+
 -- Create User table
 CREATE TABLE User (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -57,6 +62,38 @@ CREATE TABLE Review (
     FOREIGN KEY (book_id) REFERENCES Book(book_id) ON DELETE SET NULL ON UPDATE RESTRICT
 );
 
+-- Triggers to update avg_rating in Book table
+DELIMITER //
+
+CREATE TRIGGER update_avg_rating AFTER INSERT ON Review
+FOR EACH ROW
+BEGIN
+    UPDATE Book
+    SET avg_rating = (SELECT COALESCE(AVG(rating), 0) FROM Review WHERE book_id = NEW.book_id)
+    WHERE book_id = NEW.book_id;
+END;
+//
+
+CREATE TRIGGER update_avg_rating_on_delete AFTER DELETE ON Review
+FOR EACH ROW
+BEGIN
+    UPDATE Book
+    SET avg_rating = (SELECT COALESCE(AVG(rating), 0) FROM Review WHERE book_id = OLD.book_id)
+    WHERE book_id = OLD.book_id;
+END;
+//
+
+CREATE TRIGGER update_avg_rating_on_update AFTER UPDATE ON Review
+FOR EACH ROW
+BEGIN
+    UPDATE Book
+    SET avg_rating = (SELECT COALESCE(AVG(rating), 0) FROM Review WHERE book_id = NEW.book_id)
+    WHERE book_id = NEW.book_id;
+END;
+//
+
+DELIMITER ;
+
 -- Sample data for User table
 INSERT INTO User (username, password, date_joined, role) VALUES
 ('john_doe', 'password1', '2023-01-01', 'user'),
@@ -85,16 +122,16 @@ INSERT INTO Author (fname, lname) VALUES
 
 -- Sample data for Book table
 INSERT INTO Book (author_id, title, date_published, avg_rating, genre) VALUES
-(1, 'The Firm', '1991-02-01', 4.5, 'Legal Thriller'),
-(2, 'Pride and Prejudice', '1813-01-28', 4.8, 'Romance'),
-(3, 'Collected Poems', '1890-01-01', 4.2, 'Poetry'),
-(4, 'Adventures of Huckleberry Finn', '1884-12-10', 4.0, 'Adventure'),
-(5, 'A Tale of Two Cities', '1859-04-30', 4.1, 'Historical Fiction'),
-(6, 'War and Peace', '1869-01-01', 4.3, 'Historical Fiction'),
-(7, '1984', '1949-06-08', 4.6, 'Dystopian'),
-(8, 'Harry Potter and the Sorcerers Stone', '1997-06-26', 4.9, 'Fantasy'),
-(9, 'Murder on the Orient Express', '1934-01-01', 4.7, 'Mystery'),
-(10, 'The Old Man and the Sea', '1952-09-01', 4.4, 'Literary Fiction');
+(1, 'The Firm', '1991-02-01', 0, 'Legal Thriller'),
+(2, 'Pride and Prejudice', '1813-01-28', 0, 'Romance'),
+(3, 'Collected Poems', '1890-01-01', 0, 'Poetry'),
+(4, 'Adventures of Huckleberry Finn', '1884-12-10', 0, 'Adventure'),
+(5, 'A Tale of Two Cities', '1859-04-30', 0, 'Historical Fiction'),
+(6, 'War and Peace', '1869-01-01', 0, 'Historical Fiction'),
+(7, '1984', '1949-06-08', 0, 'Dystopian'),
+(8, 'Harry Potter and the Sorcerers Stone', '1997-06-26', 0, 'Fantasy'),
+(9, 'Murder on the Orient Express', '1934-01-01', 0, 'Mystery'),
+(10, 'The Old Man and the Sea', '1952-09-01', 0, 'Literary Fiction');
 
 -- Sample data for Reading List table
 INSERT INTO Reading_List (user_id, book_id, list_name, date_added, status) VALUES
@@ -122,36 +159,5 @@ INSERT INTO Review (user_id, book_id, rating, review_text) VALUES
 (5, 9, 4, 'A clever and engaging mystery.'),
 (5, 10, 3, 'A simple yet profound story.');
 
--- Triggers to update avg_rating in Book table
-DELIMITER //
-
-CREATE TRIGGER update_avg_rating AFTER INSERT ON Review
-FOR EACH ROW
-BEGIN
-    UPDATE Book
-    SET avg_rating = (SELECT IFNULL(AVG(rating), 0) FROM Review WHERE book_id = NEW.book_id)
-    WHERE book_id = NEW.book_id;
-END;
-//
-
-CREATE TRIGGER update_avg_rating_on_delete AFTER DELETE ON Review
-FOR EACH ROW
-BEGIN
-    UPDATE Book
-    SET avg_rating = (SELECT IFNULL(AVG(rating), 0) FROM Review WHERE book_id = OLD.book_id)
-    WHERE book_id = OLD.book_id;
-END;
-//
-
-CREATE TRIGGER update_avg_rating_on_update AFTER UPDATE ON Review
-FOR EACH ROW
-BEGIN
-    UPDATE Book
-    SET avg_rating = (SELECT IFNULL(AVG(rating), 0) FROM Review WHERE book_id = NEW.book_id)
-    WHERE book_id = NEW.book_id;
-END;
-//
-
-DELIMITER ;
 
 

@@ -29,6 +29,12 @@
     <div class="container">
         <div class="main-content">
             <h2>My Reading List</h2>
+            <div class="reading-list-create">
+                <form id="create-reading-list-form">
+                    <input type="text" name="list_name" id="list_name" placeholder="Enter reading list name" required>
+                    <button type="submit">Create Reading List</button>
+                </form>
+            </div>
             <div>
                 <label for="sort-reading-list">Sort by:</label>
                 <select id="sort-reading-list" onchange="fetchReadingList(<?php echo $_SESSION['user_id']; ?>)">
@@ -53,39 +59,54 @@
                 const readingListsElement = document.getElementById("reading-lists");
                 readingListsElement.innerHTML = "";
 
-                const lists = {};
-                readingList.forEach((item) => {
-                    if (!lists[item.list_name]) {
-                        lists[item.list_name] = [];
-                    }
-                    lists[item.list_name].push(item);
-                });
-
-                for (const listName in lists) {
-                    lists[listName].sort((a, b) => {
-                        if (sortBy === 'author') {
-                            return a.lname.localeCompare(b.lname) || a.fname.localeCompare(b.fname);
-                        }
-                        return a[sortBy].localeCompare(b[sortBy]);
-                    });
-
+                readingList.forEach((list) => {
                     const listDiv = document.createElement("div");
                     listDiv.className = "reading-list-box";
-                    listDiv.innerHTML = `<h3>${listName}</h3>`;
-                    const ul = document.createElement("ul");
-                    lists[listName].forEach((item) => {
-                        const li = document.createElement("li");
-                        li.innerHTML = `
-                            Book ID: ${item.book_id}, Status: ${item.status} <br>
-                            Date Added: ${item.date_added}
-                        `;
-                        ul.appendChild(li);
-                    });
-                    listDiv.appendChild(ul);
+                    listDiv.innerHTML = `
+                        <h3>${list.list_name}</h3>
+                        <button onclick="deleteReadingList(${list.list_id})">Delete</button>
+                    `;
                     readingListsElement.appendChild(listDiv);
-                }
+                });
             } catch (err) {
                 console.error("Error fetching reading list:", err);
+            }
+        }
+
+        async function createReadingList(userId, listName) {
+            try {
+                const formData = new FormData();
+                formData.append("action", "createReadingList");
+                formData.append("user_id", userId);
+                formData.append("list_name", listName);
+
+                const response = await fetch("server.php", {
+                    method: "POST",
+                    body: formData,
+                });
+                const result = await response.json();
+                if (result.message) {
+                    alert(result.message);
+                } else {
+                    alert(result.error);
+                }
+            } catch (err) {
+                console.error("Error creating reading list:", err);
+            }
+        }
+
+        async function deleteReadingList(listId) {
+            try {
+                const response = await fetch(`server.php?action=deleteReadingList&list_id=${listId}`, { method: "GET" });
+                const result = await response.json();
+                if (result.message) {
+                    alert(result.message);
+                    fetchReadingList(<?php echo $_SESSION['user_id']; ?>);
+                } else {
+                    alert(result.error);
+                }
+            } catch (err) {
+                console.error("Error deleting reading list:", err);
             }
         }
 
@@ -151,6 +172,16 @@
         const userId = <?php echo $_SESSION['user_id']; ?>;
         fetchReadingList(userId);
         fetchUserReviews(userId);
+
+        document.getElementById('create-reading-list-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const listName = document.getElementById('list_name').value.trim();
+            if (listName) {
+                await createReadingList(userId, listName);
+                fetchReadingList(userId);
+                document.getElementById('list_name').value = '';
+            }
+        });
     </script>
 </body>
 </html>

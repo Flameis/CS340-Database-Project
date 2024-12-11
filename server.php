@@ -220,4 +220,36 @@ if ($action === 'deleteBook') {
     }
     echo json_encode($response);
 }
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'createReadingList') {
+    $user_id = intval($_POST['user_id']);
+    $list_name = trim($_POST['list_name']);
+    try {
+        $stmt = $conn->prepare("INSERT INTO Reading_List (user_id, list_name, date_added) VALUES (?, ?, CURRENT_DATE)");
+        $stmt->execute([$user_id, $list_name]);
+        echo json_encode(["message" => "Reading list created successfully!"]);
+    } catch (PDOException $e) {
+        echo json_encode(["error" => "Failed to create reading list: " . $e->getMessage()]);
+    }
+    exit;
+}
+
+// Delete a reading list
+if ($action === 'deleteReadingList') {
+    $list_id = intval($_GET['list_id']);
+    try {
+        $stmt = $conn->prepare("DELETE FROM Reading_List WHERE list_id = ?");
+        $stmt->execute([$list_id]);
+        echo json_encode(["message" => "Reading list deleted successfully!"]);
+    } catch (PDOException $e) {
+        echo json_encode(["error" => "Failed to delete reading list: " . $e->getMessage()]);
+    }
+    exit;
+}
+
+// Fallback for invalid actions
+if (!$action) {
+    echo json_encode(["error" => "Invalid action"]);
+    exit;
+}
 ?>
