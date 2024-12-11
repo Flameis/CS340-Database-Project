@@ -5,10 +5,6 @@ $db = "cs340_username"; // Your database name
 $user = "cs340_username"; // Your MySQL username
 $pass = "password"; // Your MySQL password
 
-// $db = "cs340_username"; // Your database name
-// $user = "cs340_username"; // Your MySQL username
-// $pass = "password"; // Your MySQL password
-
 // Create connection
 try {
     $conn = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
@@ -28,12 +24,21 @@ if ($action === 'addReview') {
     $book = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($book) {
-        $stmt = $conn->prepare("INSERT INTO Review (user_id, book_id, rating, review_text, date_created, date_updated) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
-        try {
-            $stmt->execute([$data['user_id'], $data['book_id'], $data['rating'], $data['review_text']]);
-            echo json_encode(["message" => "Review added successfully!"]);
-        } catch (PDOException $e) {
-            echo json_encode(["error" => "Failed to add review: " . $e->getMessage()]);
+        // Check if the user has already reviewed this book
+        $stmt = $conn->prepare("SELECT * FROM Review WHERE user_id = ? AND book_id = ?");
+        $stmt->execute([$data['user_id'], $data['book_id']]);
+        $existingReview = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($existingReview) {
+            echo json_encode(["error" => "You have already reviewed this book."]);
+        } else {
+            $stmt = $conn->prepare("INSERT INTO Review (user_id, book_id, rating, review_text, date_created, date_updated) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
+            try {
+                $stmt->execute([$data['user_id'], $data['book_id'], $data['rating'], $data['review_text']]);
+                echo json_encode(["message" => "Review added successfully!"]);
+            } catch (PDOException $e) {
+                echo json_encode(["error" => "Failed to add review: " . $e->getMessage()]);
+            }
         }
     } else {
         echo json_encode(["error" => "Book not found."]);

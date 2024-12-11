@@ -153,7 +153,7 @@ async function fetchReviews(bookId) {
 // Function to delete a review
 async function deleteReview(reviewId) {
     const userId = document.getElementById("user_id").value;
-    const bookId = document.getElementById("popup-book-id").value; // Get the bookId from the popup
+    const bookId = document.querySelector("#book-details h2").dataset.bookId; // Get the bookId from the book details
     const response = await fetch(`server.php?action=deleteReview&review_id=${reviewId}&user_id=${userId}`, { method: "GET" });
     const result = await response.json();
     if (result.message) {
@@ -185,7 +185,7 @@ function editReviewPrompt(reviewId, currentRating, currentText) {
 // Function to edit a review
 async function editReview(reviewId, newRating, newText) {
     const userId = document.getElementById("user_id").value;
-    const bookId = document.getElementById("popup-book-id").value; // Get the bookId from the popup
+    const bookId = document.querySelector("#book-details h2").dataset.bookId; // Get the bookId from the book details
     const data = { review_id: reviewId, rating: newRating, review_text: newText, user_id: userId };
     const response = await fetch("server.php?action=editReview", {
         method: "POST",
@@ -196,6 +196,7 @@ async function editReview(reviewId, newRating, newText) {
     if (result.message) {
         alert(result.message);
         fetchReviews(bookId); // Pass the correct bookId
+        closePopup();
     } else {
         alert(result.error);
     }
@@ -235,16 +236,28 @@ async function viewBookDetails(bookId) {
         const result = await response.json();
         const bookDetails = document.getElementById("book-details");
         bookDetails.innerHTML = `
-            <h2>${result.book.title}</h2>
+            <h2 data-book-id="${bookId}">${result.book.title}</h2>
             <p>Author: ${result.book.fname} ${result.book.lname}</p>
             <p>Genre: ${result.book.genre}</p>
             <p>Rating: ${result.book.avg_rating}</p>
             <h3>Reviews:</h3>
-            <ul id="reviews-list">
-                ${result.reviews.map(review => `<li>${review.username}: ${review.review_text} - ${review.rating} stars</li>`).join('')}
-            </ul>
+            <ul id="reviews-list"></ul>
         `;
-        fetchReviews(bookId);
+        const reviewsList = document.getElementById("reviews-list");
+        const userId = document.getElementById("user_id").value;
+        const userRole = await isUserAdmin() ? 'admin' : 'user';
+        result.reviews.forEach((review) => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+                User: ${review.username}, Rating: ${review.rating} <br>
+                Review: ${review.review_text}
+                ${(review.user_id == userId || userRole == 'admin') ? `
+                <button onclick="deleteReview(${review.review_id})">Delete</button>
+                <button onclick="editReviewPrompt(${review.review_id}, ${review.rating}, '${review.review_text}')">Edit</button>
+                ` : ''}
+            `;
+            reviewsList.appendChild(li);
+        });
     } catch (err) {
         console.error("Error fetching book details:", err);
     }
