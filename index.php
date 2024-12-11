@@ -17,7 +17,7 @@
     <input type="hidden" id="user_id" value="<?php echo $_SESSION['user_id']; ?>">
     <div class="header">
         <h1>My Book Tracker</h1>
-        <div>
+        <div class="profile-button">
             <a href="user.php"><button>My Profile</button></a>
         </div>
         <div class="logout-button">
