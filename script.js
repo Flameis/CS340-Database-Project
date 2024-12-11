@@ -1,34 +1,3 @@
-// Event listener for adding a review
-document.getElementById("add-review-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const formData = new FormData(e.target);
-    const data = {
-        user_id: formData.get("user_id"),
-        book_id: formData.get("book_id"),
-        rating: formData.get("rating"),
-        review_text: formData.get("review_text"),
-    };
-
-    try {
-        const response = await fetch("server.php?action=addReview", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-        });
-        const result = await response.json();
-        if (result.message) {
-            alert(result.message);
-            fetchReviews(data.book_id);
-            closeReviewPopup();
-        } else {
-            alert(result.error);
-        }
-    } catch (err) {
-        console.error("Error:", err);
-    }
-});
-
 // Event listener for searching books
 document.getElementById("search-form").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -70,7 +39,7 @@ function displayBooks(books) {
             Rating: ${book.avg_rating}
             <button onclick="viewBookDetails(${book.book_id})">View Details</button>
             <button onclick="addToReadingList(${book.book_id})">Add to Reading List</button>
-            <button onclick="showReviewPopup(${book.book_id})">Add Review</button> <!-- Add Review button added here -->
+            <button onclick="showReviewPopup(${book.book_id})">Add Review</button>
         `;
         bookList.appendChild(li);
     });
@@ -83,7 +52,7 @@ function showReviewPopup(bookId) {
     popup.innerHTML = `
         <div class="popup-content">
             <h3>Add Review</h3>
-            <form id="add-review-form">
+            <form id="popup-review-form">
                 <input type="hidden" name="user_id" value="${document.getElementById('user_id').value}">
                 <input type="hidden" id="popup-book-id" name="book_id" value="${bookId}">
                 <label for="popup-rating">Rating (1-5):</label>
@@ -96,6 +65,36 @@ function showReviewPopup(bookId) {
         </div>
     `;
     document.body.appendChild(popup);
+
+    document.getElementById("popup-review-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+    
+        const formData = new FormData(e.target);
+        const data = {
+            user_id: formData.get("user_id"),
+            book_id: formData.get("book_id"),
+            rating: formData.get("rating"),
+            review_text: formData.get("review_text"),
+        };
+    
+        try {
+            const response = await fetch("server.php?action=addReview", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            });
+            const result = await response.json();
+            if (result.message) {
+                alert(result.message);
+                fetchReviews(data.book_id);
+                popup.remove();
+            } else {
+                alert(result.error);
+            }
+        } catch (err) {
+            console.error("Error:", err);
+        }
+    });
 }
 
 // Function to close popup
@@ -104,11 +103,6 @@ function closePopup() {
     if (popup) {
         document.body.removeChild(popup);
     }
-}
-
-// Function to close review popup
-function closeReviewPopup() {
-    document.getElementById("review-popup").style.display = "none";
 }
 
 // Function to fetch reviews for a book
@@ -204,6 +198,7 @@ async function fetchBooks() {
                 Rating: ${book.avg_rating}
                 <button onclick="viewBookDetails(${book.book_id})">View Details</button>
                 <button onclick="addToReadingList(${book.book_id})">Add to Reading List</button>
+                <button onclick="showReviewPopup(${book.book_id})">Add Review</button>
             `;
             bookList.appendChild(li);
         });
