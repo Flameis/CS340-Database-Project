@@ -59,7 +59,7 @@ CREATE TABLE Review (
     rating INT CHECK (rating BETWEEN 1 AND 5),
     review_text TEXT,
     FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE ON UPDATE RESTRICT,
-    FOREIGN KEY (book_id) REFERENCES Book(book_id) ON DELETE SET NULL ON UPDATE RESTRICT
+    FOREIGN KEY (book_id) REFERENCES Book(book_id) ON DELETE CASCADE ON UPDATE RESTRICT
 );
 
 -- Triggers to update avg_rating in Book table
