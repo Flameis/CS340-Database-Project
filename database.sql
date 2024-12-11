@@ -34,7 +34,7 @@ CREATE TABLE Book (
     date_published DATE NOT NULL,
     avg_rating DECIMAL(3, 2),
     genre VARCHAR(50),
-    FOREIGN KEY (author_id) REFERENCES Author(author_id) ON DELETE SET NULL ON UPDATE RESTRICT
+    FOREIGN KEY (author_id) REFERENCES Author(author_id) ON DELETE CASCADE ON UPDATE RESTRICT
 );
 
 -- Create Reading List table
