@@ -15,6 +15,7 @@
 </head>
 <body>
     <input type="hidden" id="user_id" value="<?php echo $_SESSION['user_id']; ?>">
+    <input type="hidden" id="reading-list-select" value="">
     <div class="header">
         <h1>My Book Tracker</h1>
         <div class="profile-button">
