@@ -200,6 +200,27 @@ if ($action === 'getUserReadingLists') {
     $readingLists = $stmt->fetchAll(PDO::FETCH_ASSOC);
     echo json_encode($readingLists);
 }
+
+if ($action === 'getRole') {
+    $user_id = $_GET['user_id'];
+    $stmt = $conn->prepare("SELECT role FROM User WHERE user_id = ?");
+    $stmt->execute([$user_id]);
+    $role = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode($role);
+}
+
+if ($action === 'deleteBook') {
+    $book_id = $_GET['book_id'];
+    $stmt = $conn->prepare("DELETE FROM Book WHERE book_id = ?");
+    if ($stmt->execute([$book_id])) {
+        $response = ['status' => 'success'];
+    }
+    else {
+        $response = ['status' => 'error'];
+    }
+    echo json_encode($response);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'createReadingList') {
     $user_id = intval($_POST['user_id']);
     $list_name = trim($_POST['list_name']);

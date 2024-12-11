@@ -26,7 +26,23 @@ document.getElementById("filter-form").addEventListener("submit", async (e) => {
     }
 });
 
-// Function to display books
+async function isUserAdmin() {
+    const userId = document.getElementById("user_id").value;
+    try {
+        const response = await fetch(`server.php?action=getRole&user_id=${userId}`);
+        if (response.ok) {
+            const data = await response.json();
+            if (data[0].role === 'admin') {
+                return true;
+            }
+        }
+    } catch (error) {
+        console.error("Error:", error);
+    }
+    return false;
+}
+
+// Function to display books -- NOT THE MAIN DISPLAY
 function displayBooks(books) {
     const bookList = document.getElementById("book-list");
     bookList.innerHTML = "";
@@ -182,9 +198,31 @@ async function editReview(reviewId, newRating, newText) {
     }
 }
 
+async function deleteBook(bookId) {
+    try {
+        const response = await fetch(`server.php?action=deleteBook&book_id=${bookId}`);
+
+        if (response.ok) {
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                alert("Book successfully deleted");
+                await fetchBooks();
+            }
+            else {
+                alert(`Could not delete book`);
+            }
+        }
+    }
+    catch (error) {
+        console.error("Error deleting book:", error);
+    }
+}
+
 // Function to fetch all books
 async function fetchBooks() {
     try {
+        const admin = await isUserAdmin();
         const response = await fetch("server.php?action=getBooks");
         const books = await response.json();
         const bookList = document.getElementById("book-list");
@@ -199,6 +237,7 @@ async function fetchBooks() {
                 <button onclick="viewBookDetails(${book.book_id})">View Details</button>
                 <button onclick="addToReadingList(${book.book_id})">Add to Reading List</button>
                 <button onclick="showReviewPopup(${book.book_id})">Add Review</button>
+                ${admin ? `<button onclick="deleteBook(${book.book_id})">Delete</button>` : ''}
             `;
             bookList.appendChild(li);
         });
